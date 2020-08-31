@@ -14,32 +14,19 @@ int main() {
 
   size_t sample_count = 200;
   float dx = (x_max - x_min) / (sample_count - 1);
-  float dt = 0.0005f;
-  float c = 0.05f;
-  float courant_square = c * c * dt * dt / (dx * dx);
+  float dt = 0.005f;
+  float alpha = 0.0005f;
 
-  vector<float> wave(sample_count, 0);
-  vector<float> vave(sample_count, 0);
-  vector<float> bave(sample_count, 0);
+  vector<float> heat(sample_count, 0);
+  heat[0] = 0.0f;
 
-  // initial Gaußpulse
-  for (size_t i = 1; i < sample_count - 1; ++i) {
-    const auto scale = float(i) / (sample_count - 1);
-    const auto x = x_min * (1.0f - scale) + x_max * scale;
-    wave[i] = exp(-x * x * 50.0f);
-    const auto vx = x - 0.5 * c * dt;
-    const auto wx = x + 0.5 * c * dt;
-    vave[i] = exp(-wx * wx * 50.0f) - exp(-vx * vx * 50.0f);
-    vave[i] = vave[i] / dt;
-  }
-
-  // wave[sample_count / 2] = 2.0f;
-
-  // for (size_t i = 0; i < sample_count; ++i) {
-  //   bave[i] = wave[i];
+  // for (size_t i = 1; i < sample_count - 1; ++i) {
+  //   const auto scale = float(i) / (sample_count - 1);
+  //   const auto x = x_min * (1.0f - scale) + x_max * scale;
+  //   heat[i] = exp(-x * x * 50.0f);
   // }
 
-  sf::RenderWindow window(sf::VideoMode(width, height), "Swing dein Ding");
+  sf::RenderWindow window(sf::VideoMode(width, height), "Haißes Tail");
 
   float view_x_min = 1.1f * x_min;
   float view_x_max = 1.1f * x_max;
@@ -53,17 +40,12 @@ int main() {
     // if (delta >= dt) {
     //   old_time = time;
     for (size_t i = 1; i < sample_count - 1; ++i) {
-      vave[i] += dt * (c * c / (dx * dx) *
-                           (wave[i + 1] + wave[i - 1] - 2.0f * wave[i]) -
-                       0.05f * vave[i]);
-      wave[i] += dt * vave[i];
+      heat[i] += dt * (alpha / (dx * dx) *
+                           (heat[i + 1] + heat[i - 1] - 2.0f * heat[i]) +
+                       ((i == sample_count / 2) ? (0.1f) : (0.0f)));
     }
-
-    // float tmp = 2 * wave[i] - bave[i] +
-    //             courant_square * (wave[i + 1] + wave[i - 1] - 2 * wave[i]);
-    // bave[i] = wave[i];
-    // wave[i] = tmp;
-    // }
+    heat[0] = heat[1];
+    // heat[sample_count - 1] = heat[sample_count - 2];
     // }
     sf::Event event;
     while (window.pollEvent(event)) {
@@ -77,7 +59,7 @@ int main() {
       const auto x = x_min * (1.0f - scale) + x_max * scale;
       point.setPosition(
           (x - view_x_min) / (view_x_max - view_x_min) * width,
-          (wave[i] - view_y_min) / (view_y_max - view_y_min) * height);
+          (heat[i] - view_y_min) / (view_y_max - view_y_min) * height);
       window.draw(point);
     }
     window.display();

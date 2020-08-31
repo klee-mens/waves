@@ -7,4 +7,5 @@ cxx{*}: extension = cpp
 
 import libs = sfml-graphics%lib{sfml-graphics}
 
-exe{waves}: {hxx cxx}{**} $libs
+./: exe{waves}: cxx{main} $libs
+./: exe{heat}: cxx{heat} $libs
